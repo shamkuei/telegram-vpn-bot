@@ -38,13 +38,11 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
-  // Payment Providers
-  CRYPTOPAY_API_KEY: z.string().optional(),
-  CRYPTOPAY_WEBHOOK_SECRET: z.string().optional(),
-  NOWPAYMENTS_API_KEY: z.string().optional(),
-  NOWPAYMENTS_API_IPN_SECRET: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Manual Payment Configuration
+  ADMIN_CARD_NUMBER: z.string().optional(),
+  ADMIN_CARD_HOLDER: z.string().default('Admin'),
+  MANUAL_PAYMENT_EXPIRY_HOURS: z.coerce.number().default(24),
+  MAX_SCREENSHOT_SIZE_MB: z.coerce.number().default(10),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),

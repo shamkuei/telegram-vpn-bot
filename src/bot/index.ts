@@ -53,6 +53,10 @@ export interface BotSession {
   state?: string
   selectedPlan?: number
   selectedServer?: number
+  pendingPaymentId?: number
+  awaitingReference?: boolean
+  awaitingRejectionReason?: boolean
+  rejectingPaymentId?: number
   pendingPayment?: {
     amount: number
     provider: string
@@ -74,11 +78,12 @@ import { startHandler } from './handlers/start.js'
 import { helpHandler } from './handlers/help.js'
 import { plansHandler } from './handlers/plans.js'
 import { mySubscriptionsHandler } from './handlers/subscriptions.js'
-import { paymentHandler } from './handlers/payment.js'
+import { paymentHandler, handleScreenshotUpload, handlePaymentReferenceInput } from './handlers/payment.js'
 import { profileHandler } from './handlers/profile.js'
 import { giftHandler } from './handlers/gift.js'
 import { testAccountHandler } from './handlers/test-account.js'
 import { referralHandler } from './handlers/referral.js'
+import { adminHandler, handlePaymentRejectionReason } from './handlers/admin.js'
 
 // ============================================================================
 // Register Handlers
@@ -116,6 +121,42 @@ bot.callbackQuery(/^test:/, testAccountHandler)
 // Referral
 bot.command('referral', referralHandler)
 bot.callbackQuery(/^referral:/, referralHandler)
+
+// Admin commands
+bot.command('admin', adminHandler)
+bot.command('verify_payment', adminHandler)
+bot.command('payments', adminHandler)
+bot.callbackQuery(/^admin:/, adminHandler)
+
+// ============================================================================
+// Handle Photo Messages (for screenshots)
+// ============================================================================
+
+bot.on('msg:photo', async (ctx) => {
+  // Check if user has a pending payment
+  const pendingPaymentId = (ctx.session as any).pendingPaymentId
+  if (pendingPaymentId) {
+    await handleScreenshotUpload(ctx)
+    return
+  }
+})
+
+// ============================================================================
+// Handle Text Messages (for transaction reference & rejection reason)
+// ============================================================================
+
+bot.on('msg:text', async (ctx) => {
+  const text = ctx.message?.text
+  if (!text) return
+
+  // Check if awaiting rejection reason (admin)
+  const rejectionHandled = await handlePaymentRejectionReason(ctx, text)
+  if (rejectionHandled) return
+
+  // Check if awaiting payment reference (user)
+  const handled = await handlePaymentReferenceInput(ctx, text)
+  if (handled) return
+})
 
 // ============================================================================
 // Error Handler

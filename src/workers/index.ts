@@ -29,7 +29,8 @@ const defaultQueueOptions = {
 // Job Queue Definitions
 // ============================================================================
 
-export const paymentQueue = new Queue('payments', {
+// Manual Payment Queue (for admin verification notifications, expiry checks)
+export const manualPaymentQueue = new Queue('manual-payments', {
   ...defaultQueueOptions,
   defaultJobOptions: {
     ...defaultQueueOptions.defaultJobOptions,
@@ -47,7 +48,7 @@ export const marzbanQueue = new Queue('marzban-sync', {
 
 export const notificationQueue = new Queue('notifications', {
   ...defaultQueueOptions,
-  defaultQueueOptions: {
+  defaultJobOptions: {
     ...defaultQueueOptions.defaultJobOptions,
     concurrency: config.CONCURRENCY_NOTIFICATION_WORKER || 20,
     limiter: {
@@ -99,7 +100,7 @@ function setupQueueListeners(queue: Queue) {
   })
 }
 
-setupQueueListeners(paymentQueue)
+setupQueueListeners(manualPaymentQueue)
 setupQueueListeners(marzbanQueue)
 setupQueueListeners(notificationQueue)
 setupQueueListeners(scheduledQueue)
@@ -109,12 +110,11 @@ setupQueueListeners(maintenanceQueue)
 // Job Types
 // ============================================================================
 
-// Payment Jobs
-export interface PaymentJobData {
-  type: 'check' | 'confirm' | 'expire' | 'refund'
+// Manual Payment Jobs
+export interface ManualPaymentJobData {
+  type: 'check_expired' | 'notify_admin' | 'process_verification'
   paymentId: number
-  provider: string
-  providerInvoiceId: string
+  userId: number
 }
 
 // Marzban Sync Jobs
@@ -139,7 +139,7 @@ export interface NotificationJobData {
 
 // Scheduled Jobs
 export interface ScheduledJobData {
-  type: 'check_expired_subscriptions' | 'sync_all_usage' | 'check_pending_payments' | 'cleanup_expired_cache' | 'generate_daily_reports' | 'reset_user_usage'
+  type: 'check_expired_subscriptions' | 'sync_all_usage' | 'check_expired_manual_payments' | 'cleanup_expired_cache' | 'generate_daily_reports' | 'reset_user_usage'
   timestamp?: number
 }
 
@@ -153,10 +153,10 @@ export interface MaintenanceJobData {
 // Job Creation Helpers
 // ============================================================================
 
-export async function addPaymentJob(data: PaymentJobData, options?: any) {
-  return await paymentQueue.add('process-payment', data, {
+export async function addManualPaymentJob(data: ManualPaymentJobData, options?: any) {
+  return await manualPaymentQueue.add('process-manual-payment', data, {
     ...options,
-    jobId: `payment_${data.type}_${data.paymentId}_${Date.now()}`
+    jobId: `manual_payment_${data.type}_${data.paymentId}_${Date.now()}`
   })
 }
 
@@ -202,13 +202,13 @@ export async function setupScheduledJobs() {
     '0 * * * *' // Every hour
   )
 
-  // Check pending payments (every minute)
+  // Check expired manual payments (every 10 minutes)
   await scheduleRecurringJob(
     scheduledQueue,
     {
-      type: 'check_pending_payments'
+      type: 'check_expired_manual_payments'
     } as ScheduledJobData,
-    '* * * * *' // Every minute
+    '*/10 * * * *' // Every 10 minutes
   )
 
   // Sync all usage from Marzban (every 5 minutes)
@@ -277,7 +277,7 @@ export async function resumeQueue(queue: Queue) {
 
 export async function pauseAllQueues() {
   await Promise.all([
-    pauseQueue(paymentQueue),
+    pauseQueue(manualPaymentQueue),
     pauseQueue(marzbanQueue),
     pauseQueue(notificationQueue),
     pauseQueue(scheduledQueue),
@@ -287,7 +287,7 @@ export async function pauseAllQueues() {
 
 export async function resumeAllQueues() {
   await Promise.all([
-    resumeQueue(paymentQueue),
+    resumeQueue(manualPaymentQueue),
     resumeQueue(marzbanQueue),
     resumeQueue(notificationQueue),
     resumeQueue(scheduledQueue),
@@ -301,21 +301,21 @@ export async function resumeAllQueues() {
 
 export async function getQueueStats() {
   const [
-    paymentStats,
+    manualPaymentStats,
     marzbanStats,
     notificationStats,
     scheduledStats,
     maintenanceStats
   ] = await Promise.all([
-      paymentQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
-      marzbanQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
-      notificationQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
-      scheduledQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
-      maintenanceQueue.getJobCounts('waiting', 'active', 'completed', 'failed')
+    manualPaymentQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
+    marzbanQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
+    notificationQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
+    scheduledQueue.getJobCounts('waiting', 'active', 'completed', 'failed'),
+    maintenanceQueue.getJobCounts('waiting', 'active', 'completed', 'failed')
   ])
 
   return {
-    payment: paymentStats,
+    manualPayment: manualPaymentStats,
     marzban: marzbanStats,
     notification: notificationStats,
     scheduled: scheduledStats,
@@ -329,7 +329,7 @@ export async function getQueueStats() {
 
 export async function closeAllQueues() {
   await Promise.all([
-    paymentQueue.close(),
+    manualPaymentQueue.close(),
     marzbanQueue.close(),
     notificationQueue.close(),
     scheduledQueue.close(),

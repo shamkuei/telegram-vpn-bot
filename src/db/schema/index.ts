@@ -11,6 +11,7 @@ export * from './subscriptions.js'
 export * from './wallets.js'
 export * from './wallet-transactions.js'
 export * from './payments.js'
+export * from './manual-payments.js'
 export * from './referrals.js'
 export * from './gift-codes.js'
 export * from './resellers.js'
@@ -33,6 +34,7 @@ import { subscriptions } from './subscriptions.js'
 import { wallets } from './wallets.js'
 import { walletTransactions } from './wallet-transactions.js'
 import { paymentLogs } from './payments.js'
+import { manualPayments } from './manual-payments.js'
 import { referrals } from './referrals.js'
 import { giftCodes, giftRedemptions } from './gift-codes.js'
 import { resellers, resellerTransactions } from './resellers.js'
@@ -56,6 +58,7 @@ export const schema = {
   wallets,
   walletTransactions,
   paymentLogs,
+  manualPayments,
   referrals,
   giftCodes,
   giftRedemptions,

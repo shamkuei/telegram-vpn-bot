@@ -1,6 +1,8 @@
 import { eq, and, desc, asc, sql, inArray, isNull, isNotNull, or } from 'drizzle-orm'
 import { db } from './index.js'
 import * as schema from './schema/index.js'
+import type { NewAuditLog } from './schema/index.js'
+import type { NewManualPayment } from './schema/index.js'
 
 // ============================================================================
 // User Queries
@@ -579,5 +581,167 @@ export const auditLogQueries = {
       .where(eq(schema.auditLogs.status, 'failed'))
       .orderBy(desc(schema.auditLogs.createdAt))
       .limit(limit)
+  }
+}
+
+// ============================================================================
+// Manual Payment Queries
+// ============================================================================
+
+export const manualPaymentQueries = {
+  // Create manual payment
+  create: async (payment: NewManualPayment) => {
+    const [newPayment] = await db.insert(schema.manualPayments).values(payment).returning()
+    return newPayment
+  },
+
+  // Find by ID
+  findById: async (id: number) => {
+    const [payment] = await db
+      .select()
+      .from(schema.manualPayments)
+      .where(eq(schema.manualPayments.id, id))
+      .limit(1)
+    return payment || null
+  },
+
+  // Get pending payments (for admin verification)
+  getPending: async (limit: number = 50, offset: number = 0) => {
+    return await db
+      .select({
+        payment: schema.manualPayments,
+        user: schema.users,
+        plan: schema.plans
+      })
+      .from(schema.manualPayments)
+      .innerJoin(schema.users, eq(schema.manualPayments.userId, schema.users.id))
+      .innerJoin(schema.plans, eq(schema.manualPayments.planId, schema.plans.id))
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.screenshotFileId)
+        )
+      )
+      .orderBy(desc(schema.manualPayments.createdAt))
+      .limit(limit)
+      .offset(offset)
+  },
+
+  // Get user payments
+  getByUserId: async (userId: number) => {
+    return await db
+      .select({
+        payment: schema.manualPayments,
+        plan: schema.plans
+      })
+      .from(schema.manualPayments)
+      .innerJoin(schema.plans, eq(schema.manualPayments.planId, schema.plans.id))
+      .where(eq(schema.manualPayments.userId, userId))
+      .orderBy(desc(schema.manualPayments.createdAt))
+  },
+
+  // Get pending payment count
+  getPendingCount: async () => {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.manualPayments)
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.screenshotFileId)
+        )
+      )
+    return result?.count || 0
+  },
+
+  // Update payment status (approve/reject)
+  updateStatus: async (
+    paymentId: number,
+    status: 'approved' | 'rejected' | 'expired',
+    verifiedBy?: number,
+    adminNote?: string,
+    rejectionReason?: string,
+    subscriptionId?: number
+  ) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        status,
+        verifiedBy,
+        verifiedAt: new Date(),
+        adminNote,
+        rejectionReason,
+        subscriptionId,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Attach screenshot to payment
+  attachScreenshot: async (
+    paymentId: number,
+    fileId: string,
+    fileUniqueId: string,
+    filePath: string,
+    mimeType: string,
+    fileSize: number
+  ) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        screenshotFileId: fileId,
+        screenshotFileUniqueId: fileUniqueId,
+        screenshotFilePath: filePath,
+        screenshotMimeType: mimeType,
+        screenshotFileSizeBytes: fileSize,
+        screenshotReceivedAt: new Date(),
+        status: 'pending',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Set payment reference (transaction ID from user)
+  setPaymentReference: async (paymentId: number, reference: string) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        paymentReference: reference,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Get expired pending payments
+  getExpiredPending: async () => {
+    return await db
+      .select()
+      .from(schema.manualPayments)
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.expiresAt),
+          sql`${schema.manualPayments.expiresAt} < NOW()`
+        )
+      )
+  },
+
+  // Mark payment as expired
+  markAsExpired: async (paymentId: number) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        status: 'expired',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
   }
 }

@@ -74,6 +74,15 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'chargeback'
 ])
 
+// Manual Payment enums
+export const manualPaymentStatusEnum = pgEnum('manual_payment_status', [
+  'pending',
+  'awaiting_screenshot',
+  'approved',
+  'rejected',
+  'expired'
+])
+
 // Referral enums
 export const referralStatusEnum = pgEnum('referral_status', [
   'pending',
