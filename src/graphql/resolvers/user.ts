@@ -1,5 +1,5 @@
-import { User } from '@/db/schema/index.js'
-import { Context } from '../context.js'
+import type { User } from '@/db/schema/users'
+import type { Context } from '@/graphql/context'
 
 // ============================================================================
 // User Field Resolvers
@@ -44,8 +44,6 @@ export async function getReferralsAsReferrer(user: User, _args: any, _ctx: Conte
 export async function getReferralAsReferred(user: User, _args: any, _ctx: Context) {
   if (!user.referredBy) return null
 
-  const { referralQueries } = await import('@/db/queries.js')
-  const { referralQueries } = await import('@/db/queries.js')
   const { db } = await import('@/db/index.js')
   const { referrals } = await import('@/db/schema/index.js')
   const { eq } = await import('drizzle-orm')

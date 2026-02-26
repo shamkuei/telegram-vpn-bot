@@ -1,6 +1,6 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { giftService } from '@/services/gift.js'
+import { giftService } from '@/services/gift'
 
 // ============================================================================
 // Types

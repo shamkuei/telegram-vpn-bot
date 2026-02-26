@@ -1,17 +1,17 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
   text,
   timestamp,
-  varchar,
-  boolean
+  varchar
 } from 'drizzle-orm/pg-core'
-import { walletTransactionTypeEnum, walletTransactionStatusEnum } from './enums.js'
-import { wallets } from './wallets.js'
-import { users } from './users.js'
+import { walletTransactionTypeEnum, walletTransactionStatusEnum } from './enums'
+import { wallets } from './wallets'
+import { users } from './users'
 
 export const walletTransactions = pgTable(
   'wallet_transactions',

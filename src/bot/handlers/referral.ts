@@ -1,6 +1,6 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { referralService } from '@/services/referral.js'
+import { referralService } from '@/services/referral'
 
 // ============================================================================
 // Types

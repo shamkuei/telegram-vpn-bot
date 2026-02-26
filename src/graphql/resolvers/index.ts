@@ -1,18 +1,17 @@
-import { Resolvers } from './types.js'
-import * as queries from './queries/index.js'
-import * as mutations from './mutations/index.js'
-import * as userResolvers from './user.js'
-import * as serverResolvers from './server.js'
-import * as planResolvers from './plan.js'
-import * as subscriptionResolvers from './subscription.js'
-import * as walletResolvers from './wallet.js'
-import * as paymentResolvers from './payment.js'
+import * as queries from './queries/index'
+import * as mutations from './mutations/index'
+import * as userResolvers from './user'
+import * as serverResolvers from './server'
+import * as planResolvers from './plan'
+import * as subscriptionResolvers from './subscription'
+import * as walletResolvers from './wallet'
+import * as paymentResolvers from './payment'
 
 // ============================================================================
 // Main Resolvers
 // ============================================================================
 
-export const resolvers: Resolvers = {
+export const resolvers = {
   // ============================================================================
   // Query Resolvers
   // ============================================================================

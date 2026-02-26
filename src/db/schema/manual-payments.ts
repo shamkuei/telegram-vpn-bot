@@ -11,9 +11,9 @@ import {
   boolean
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { manualPaymentStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { plans } from './plans.js'
+import { manualPaymentStatusEnum } from './enums'
+import { users } from './users'
+import { plans } from './plans'
 
 export const manualPayments = pgTable(
   'manual_payments',
@@ -84,12 +84,12 @@ export const manualPayments = pgTable(
     ).where(
       sql`${table.status} = 'pending' AND ${table.screenshotFileId} IS NOT NULL`
     ),
-    // Partial index for expiring pending payments
+    // Partial index for expiring pending payments (removed NOW() - not IMMUTABLE)
     expiringPendingIdx: index('idx_manual_payments_expiring_pending').on(
       table.id,
       table.userId
     ).where(
-      sql`${table.status} = 'pending' AND ${table.expiresAt} BETWEEN NOW() AND NOW() + INTERVAL '24 hours'`
+      sql`${table.status} = 'pending'`
     )
   })
 )

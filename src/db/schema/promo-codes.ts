@@ -1,4 +1,6 @@
 import {
+  bigint,
+  boolean,
   index,
   integer,
   pgTable,
@@ -7,9 +9,9 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { promoDiscountTypeEnum } from './enums.js'
-import { users } from './users.js'
-import { plans } from './plans.js'
+import { promoDiscountTypeEnum } from './enums'
+import { users } from './users'
+import { plans } from './plans'
 
 export const promoCodes = pgTable(
   'promo_codes',

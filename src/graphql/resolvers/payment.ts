@@ -1,4 +1,4 @@
-import { ResellerTransaction } from '@/db/schema/index.js'
+import type { ResellerTransaction } from '@/db/schema/resellers'
 
 export async function getByResellerTransaction(transaction: ResellerTransaction, _args: any, _ctx: any) {
   if (!transaction.paymentLogId) return null

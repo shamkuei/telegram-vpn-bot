@@ -1,5 +1,5 @@
 import Redis from 'ioredis'
-import { config } from '@/config/index.js'
+import { config } from '@/config/index'
 
 // ============================================================================
 // Redis Client Setup
@@ -573,5 +573,3 @@ export class CacheInvalidation {
     ])
   }
 }
-
-export { redis }

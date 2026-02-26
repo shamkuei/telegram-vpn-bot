@@ -1,6 +1,6 @@
-import { MiddlewareHandler } from 'hono'
-import { Context } from '@/graphql/context.js'
-import { CacheKeys, SessionStore } from '@/cache/index.js'
+import type { MiddlewareHandler } from 'hono'
+import type { Context } from '@/graphql/context'
+import { CacheKeys, SessionStore } from '@/cache/index'
 
 // ============================================================================
 // Auth Middleware

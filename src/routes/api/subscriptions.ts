@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { AppType } from '@/index.js'
+import type { AppType } from '@/index'
 
 export const subscriptionRoutes = new Hono<AppType>()
 

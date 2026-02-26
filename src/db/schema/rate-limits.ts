@@ -1,5 +1,6 @@
 import {
   bigserial,
+  boolean,
   index,
   integer,
   pgTable,
@@ -8,7 +9,7 @@ import {
   varchar,
   unique
 } from 'drizzle-orm/pg-core'
-import { rateLimitTargetTypeEnum } from './enums.js'
+import { rateLimitTargetTypeEnum } from './enums'
 
 export const rateLimits = pgTable(
   'rate_limits',

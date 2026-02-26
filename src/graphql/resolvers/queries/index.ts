@@ -1,4 +1,4 @@
-import { Context } from '../context.js'
+import type { Context } from '@/graphql/context'
 
 // ============================================================================
 // Query Implementations

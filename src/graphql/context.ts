@@ -1,4 +1,4 @@
-import { User } from '@/db/schema/index.js'
+import type { User } from '@/db/schema/users'
 
 // ============================================================================
 // GraphQL Context

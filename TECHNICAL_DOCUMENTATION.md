@@ -226,7 +226,7 @@ The database uses Drizzle ORM with the following main entities:
 
 ```typescript
 {
-  id: bigint (PK)
+  id: bigint (PK)ر این کار هیچ راهی برای ساخت بمب باقی نگذارد، یک مقام ارشد آمریکایی به Axios گفت.»
   telegramId: bigint (unique)
   telegramUsername: varchar(32)
   telegramFirstName: varchar(64)

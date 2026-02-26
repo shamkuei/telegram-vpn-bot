@@ -1,6 +1,6 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { planQueries } from '@/db/queries.js'
+import { planQueries } from '@/db/queries'
 
 // ============================================================================
 // Types

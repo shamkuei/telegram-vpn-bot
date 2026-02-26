@@ -10,9 +10,10 @@ import {
   varchar,
   unique
 } from 'drizzle-orm/pg-core'
-import { giftCodeStatusEnum } from './enums.js'
-import { plans } from './plans.js'
-import { users } from './users.js'
+import { giftCodeStatusEnum } from './enums'
+import { plans } from './plans'
+import { users } from './users'
+import { subscriptions } from './subscriptions'
 
 export const giftCodes = pgTable(
   'gift_codes',

@@ -1,10 +1,10 @@
-import { db, withTransaction } from '@/db/index.js'
-import { manualPayments, subscriptions, vpnAccounts, users, plans } from '@/db/schema/index.js'
+import { db, withTransaction } from '@/db/index'
+import { manualPayments, subscriptions, vpnAccounts, users, plans } from '@/db/schema/index'
 import { eq, and, sql } from 'drizzle-orm'
-import { marzban } from '@/marzban/index.js'
-import { manualPaymentQueries } from '@/db/queries.js'
-import type { NewManualPayment, ManualPayment, Plan, User } from '@/db/schema/index.js'
-import { CacheInvalidation } from '@/cache/index.js'
+import { marzban } from '@/marzban/index'
+import { manualPaymentQueries } from '@/db/queries'
+import type { NewManualPayment, ManualPayment, Plan, User } from '@/db/schema/index'
+import { CacheInvalidation } from '@/cache/index'
 
 // ============================================================================
 // Manual Payment Service

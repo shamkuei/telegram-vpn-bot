@@ -1,8 +1,8 @@
 import { eq, and, desc, asc, sql, inArray, isNull, isNotNull, or } from 'drizzle-orm'
-import { db } from './index.js'
-import * as schema from './schema/index.js'
-import type { NewAuditLog } from './schema/index.js'
-import type { NewManualPayment } from './schema/index.js'
+import { db } from './index'
+import * as schema from './schema/index'
+import type { NewAuditLog } from './schema/index'
+import type { NewManualPayment } from './schema/index'
 
 // ============================================================================
 // User Queries

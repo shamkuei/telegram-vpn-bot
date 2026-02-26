@@ -1,4 +1,4 @@
-import { Subscription } from '@/db/schema/index.js'
+import type { Subscription } from '@/db/schema/subscriptions'
 
 export async function getPlan(subscription: Subscription, _args: any, _ctx: any) {
   const { db } = await import('@/db/index.js')

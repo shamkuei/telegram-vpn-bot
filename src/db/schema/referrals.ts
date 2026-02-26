@@ -1,6 +1,7 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
@@ -9,8 +10,8 @@ import {
   varchar,
   unique
 } from 'drizzle-orm/pg-core'
-import { referralStatusEnum } from './enums.js'
-import { users } from './users.js'
+import { referralStatusEnum } from './enums'
+import { users } from './users'
 
 export const referrals = pgTable(
   'referrals',

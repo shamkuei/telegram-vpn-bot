@@ -1,4 +1,4 @@
-import type { User, Wallet } from '@/db/schema/index.js'
+import type { User, Wallet } from '@/db/schema/index'
 
 // ============================================================================
 // Profile Display Utilities

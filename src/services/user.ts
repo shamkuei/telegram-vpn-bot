@@ -1,9 +1,9 @@
-import { db } from '@/db/index.js'
-import { users } from '@/db/schema/index.js'
+import { db } from '@/db/index'
+import { users } from '@/db/schema/index'
 import { eq, and } from 'drizzle-orm'
-import { generateReferralCode } from '@/utils/referral.js'
-import { CacheInvalidation } from '@/cache/index.js'
-import type { NewUser } from '@/db/schema/index.js'
+import { generateReferralCode } from '@/utils/referral'
+import { CacheInvalidation } from '@/cache/index'
+import type { NewUser } from '@/db/schema/index'
 
 // ============================================================================
 // User Service

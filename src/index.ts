@@ -1,17 +1,18 @@
+import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { prettyJSON } from 'hono/pretty-json'
-import { config } from '@/config/index.js'
+import { config } from '@/config/index'
 
 // ============================================================================
 // Import Routes
 // ============================================================================
 
-import { graphqlHandler } from '@/graphql/index.js'
-import { healthRoutes } from '@/routes/health.js'
-import { webhookRoutes } from '@/routes/webhooks.js'
-import { apiRoutes } from '@/routes/api/index.js'
+// import { graphqlHandler } from '@/graphql/index'
+import { healthRoutes } from '@/routes/health'
+import { webhookRoutes } from '@/routes/webhooks'
+import { apiRoutes } from '@/routes/api/index'
 
 // ============================================================================
 // Hono App
@@ -55,10 +56,10 @@ app.use('*', async (c, next) => {
 // Health check
 app.route('/', healthRoutes)
 
-// GraphQL endpoint
-app.all('/graphql', async (c) => {
-  return graphqlHandler(c.req.raw)
-})
+// GraphQL endpoint (temporarily disabled - missing schema)
+// app.all('/graphql', async (c) => {
+//   return graphqlHandler(c.req.raw)
+// })
 
 // Webhooks (no auth required)
 app.route('/webhooks', webhookRoutes)

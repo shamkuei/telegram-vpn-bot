@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { checkDatabaseHealth } from '@/db/index.js'
-import { checkRedisHealth, redis } from '@/cache/index.js'
-import { marzban } from '@/marzban/index.js'
+import { checkDatabaseHealth } from '@/db/index'
+import { checkRedisHealth, redis } from '@/cache/index'
+import { marzban } from '@/marzban/index'
 
 export const healthRoutes = new Hono()
 

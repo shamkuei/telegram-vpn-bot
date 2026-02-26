@@ -1,7 +1,7 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { config } from '@/config/index.js'
-import { manualPaymentService, PAYMENT_CONFIG } from '@/services/manual-payment.js'
+import { config } from '@/config/index'
+import { manualPaymentService, PAYMENT_CONFIG } from '@/services/manual-payment'
 
 // ============================================================================
 // Types

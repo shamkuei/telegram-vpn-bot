@@ -1,6 +1,6 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { getUserProfileText } from '@/bot/utils/profile.js'
+import { getUserProfileText } from '@/bot/utils/profile'
 
 // ============================================================================
 // Types

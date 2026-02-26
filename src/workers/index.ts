@@ -1,6 +1,6 @@
 import { Queue, Worker, Job, QueueEvents } from 'bullmq'
-import { redis } from '@/cache/index.js'
-import { config } from '@/config/index.js'
+import { redis } from '@/cache/index'
+import { config } from '@/config/index'
 
 // ============================================================================
 // BullMQ Configuration

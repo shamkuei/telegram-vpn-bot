@@ -1,5 +1,5 @@
 import { InlineKeyboard } from 'grammy'
-import type { Subscription } from '@/db/schema/index.js'
+import type { Subscription } from '@/db/schema/index'
 
 // ============================================================================
 // Subscription Display Utilities

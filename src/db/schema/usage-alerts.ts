@@ -1,6 +1,7 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
@@ -8,9 +9,9 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { usageAlertTypeEnum } from './enums.js'
-import { users } from './users.js'
-import { subscriptions } from './subscriptions.js'
+import { usageAlertTypeEnum } from './enums'
+import { users } from './users'
+import { subscriptions } from './subscriptions'
 
 export const usageAlerts = pgTable(
   'usage_alerts',

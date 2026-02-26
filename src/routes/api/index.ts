@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { authMiddleware } from '@/middleware/auth.js'
-import { rateLimitMiddleware } from '@/middleware/rate-limit.js'
+import { authMiddleware } from '@/middleware/auth'
+import { rateLimitMiddleware } from '@/middleware/rate-limit'
 
 export const apiRoutes = new Hono()
 
@@ -15,12 +15,12 @@ apiRoutes.use('*', rateLimitMiddleware)
 // API v1 Routes
 // ============================================================================
 
-import { userRoutes } from './users.js'
-import { subscriptionRoutes } from './subscriptions.js'
-import { paymentRoutes } from './payments.js'
-import { walletRoutes } from './wallets.js'
-import { serverRoutes } from './servers.js'
-import { planRoutes } from './plans.js'
+import { userRoutes } from './users'
+import { subscriptionRoutes } from './subscriptions'
+import { paymentRoutes } from './payments'
+import { walletRoutes } from './wallets'
+import { serverRoutes } from './servers'
+import { planRoutes } from './plans'
 
 apiRoutes.route('/users', userRoutes)
 apiRoutes.route('/subscriptions', subscriptionRoutes)

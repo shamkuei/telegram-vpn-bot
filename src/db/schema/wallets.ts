@@ -1,15 +1,16 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
+  text,
   timestamp,
   unique,
-  boolean,
-  text
+  varchar
 } from 'drizzle-orm/pg-core'
-import { users } from './users.js'
+import { users } from './users'
 
 export const wallets = pgTable(
   'wallets',

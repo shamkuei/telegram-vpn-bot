@@ -1,6 +1,6 @@
-import { MiddlewareHandler } from 'hono'
-import { RateLimiter, CacheKeys } from '@/cache/index.js'
-import type { Context } from '@/graphql/context.js'
+import type { MiddlewareHandler } from 'hono'
+import { RateLimiter, CacheKeys } from '@/cache/index'
+import type { Context } from '@/graphql/context'
 
 // ============================================================================
 // Rate Limiting Middleware

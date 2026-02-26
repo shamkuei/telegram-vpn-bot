@@ -9,10 +9,10 @@ import {
   boolean
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { testAccountStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { vpnAccounts } from './vpn-accounts.js'
-import { subscriptions } from './subscriptions.js'
+import { testAccountStatusEnum } from './enums'
+import { users } from './users'
+import { vpnAccounts } from './vpn-accounts'
+import { subscriptions } from './subscriptions'
 
 export const testAccounts = pgTable(
   'test_accounts',
@@ -61,9 +61,9 @@ export const testAccounts = pgTable(
     statusIdx: index('idx_test_accounts_status').on(table.status),
     expiresAtIdx: index('idx_test_accounts_expires_at').on(table.expiresAt),
     userActiveIdx: index('idx_test_accounts_user_active').on(table.userId, table.status),
-    // Partial index for expiring test accounts
+    // Partial index for expiring test accounts (removed NOW() - not IMMUTABLE)
     expiringSoonIdx: index('idx_test_accounts_expiring_soon').on(table.id, table.userId).where(
-      sql`${table.status} = 'active' AND ${table.expiresAt} BETWEEN NOW() AND NOW() + INTERVAL '1 hour'`
+      sql`${table.status} = 'active'`
     )
   })
 )

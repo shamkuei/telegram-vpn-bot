@@ -1,9 +1,9 @@
-import { db, withTransaction } from '@/db/index.js'
-import { subscriptions, plans, servers, paymentLogs } from '@/db/schema/index.js'
-import { eq, and, sql } from 'drizzle-orm'
-import { marzban } from '@/marzban/index.js'
-import { CacheInvalidation } from '@/cache/index.js'
-import type { NewSubscription } from '@/db/schema/index.js'
+import { db, withTransaction } from '@/db/index'
+import { subscriptions, plans, servers, paymentLogs, vpnAccounts } from '@/db/schema/index'
+import { eq, and, sql, asc } from 'drizzle-orm'
+import { marzban } from '@/marzban/index'
+import { CacheInvalidation } from '@/cache/index'
+import type { NewSubscription } from '@/db/schema/index'
 
 // ============================================================================
 // Subscription Service

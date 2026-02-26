@@ -1,15 +1,16 @@
 import {
+  bigint,
+  boolean,
   index,
   integer,
   pgTable,
   serial,
   text,
   timestamp,
-  varchar,
-  boolean,
-  bigint
+  varchar
 } from 'drizzle-orm/pg-core'
-import { planTypeEnum, serverAccessTypeEnum } from './enums.js'
+import { sql } from 'drizzle-orm'
+import { planTypeEnum, serverAccessTypeEnum } from './enums'
 
 export const plans = pgTable(
   'plans',

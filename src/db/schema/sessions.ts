@@ -1,6 +1,7 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   pgTable,
   text,
@@ -9,7 +10,7 @@ import {
   unique
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { users } from './users.js'
+import { users } from './users'
 
 export const userSessions = pgTable(
   'user_sessions',
@@ -44,9 +45,9 @@ export const userSessions = pgTable(
     ipAddressIdx: index('idx_sessions_ip_address').on(table.ipAddress),
     fingerprintIdx: index('idx_sessions_fingerprint').on(table.deviceFingerprint),
     expiresAtIdx: index('idx_sessions_expires_at').on(table.expiresAt),
-    // Partial index for active sessions cleanup
+    // Partial index for active sessions cleanup (removed NOW() - not IMMUTABLE)
     expiredCleanupIdx: index('idx_sessions_expired_cleanup').on(table.id, table.userId).where(
-      sql`${table.isActive} = true AND ${table.expiresAt} < NOW()`
+      sql`${table.isActive} = true`
     )
   })
 )

@@ -9,10 +9,11 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { resellerStatusEnum, resellerTransactionTypeEnum, resellerTransactionStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { subscriptions } from './subscriptions.js'
-import { paymentLogs } from './payments.js'
+import { sql } from 'drizzle-orm'
+import { resellerStatusEnum, resellerTransactionTypeEnum, resellerTransactionStatusEnum } from './enums'
+import { users } from './users'
+import { subscriptions } from './subscriptions'
+import { paymentLogs } from './payments'
 
 export const resellers = pgTable(
   'resellers',
@@ -93,7 +94,7 @@ export const resellerTransactions = pgTable(
     status: resellerTransactionStatusEnum('status').notNull().default('pending'),
 
     // Payout Tracking
-    payoutId: bigint('payout_id'),
+    payoutId: bigint('payout_id', { mode: 'number' }),
     payoutDate: timestamp('payout_date', { withTimezone: true }),
 
     // Timestamps

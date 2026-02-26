@@ -1,6 +1,7 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
@@ -10,8 +11,8 @@ import {
   unique
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { users } from './users.js'
-import { vpnAccounts } from './vpn-accounts.js'
+import { users } from './users'
+import { vpnAccounts } from './vpn-accounts'
 
 export const devices = pgTable(
   'devices',
@@ -59,7 +60,7 @@ export const devices = pgTable(
     isBlockedIdx: index('idx_devices_is_blocked').on(table.isBlocked),
     lastActivityIdx: index('idx_devices_last_activity').on(table.lastActivityAt),
     // Unique constraint for one active connection per device
-    uniqueActiveIdx: unique('idx_devices_unique_active').on(table.userId, table.deviceFingerprint).where(
+    uniqueActiveIdx: index('idx_devices_unique_active').on(table.userId, table.deviceFingerprint).where(
       sql`${table.isConnected} = true`
     )
   })

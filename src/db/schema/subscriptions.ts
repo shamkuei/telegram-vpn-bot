@@ -1,23 +1,23 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
   text,
   timestamp,
   varchar,
-  boolean,
   unique
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { subscriptionStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { plans } from './plans.js'
-import { servers } from './servers.js'
-import { serverRegions } from './regions.js'
-import { giftCodes } from './gift-codes.js'
-import { paymentLogs } from './payments.js'
+import { subscriptionStatusEnum } from './enums'
+import { users } from './users'
+import { plans } from './plans'
+import { servers } from './servers'
+import { serverRegions } from './regions'
+import { giftCodes } from './gift-codes'
+import { paymentLogs } from './payments'
 
 export const subscriptions = pgTable(
   'subscriptions',
@@ -89,13 +89,13 @@ export const subscriptions = pgTable(
       table.status,
       table.expiresAt
     ),
-    // Partial index for subscriptions needing renewal
+    // Partial index for subscriptions needing renewal (removed NOW() predicate - not IMMUTABLE)
     needRenewalIdx: index('idx_subscriptions_need_renewal').on(
       table.id,
       table.userId,
       table.planId
     ).where(
-      sql`${table.status} = 'active' AND ${table.autoRenew} = true AND ${table.expiresAt} BETWEEN NOW() AND NOW() + INTERVAL '3 days'`
+      sql`${table.status} = 'active' AND ${table.autoRenew} = true`
     )
   })
 )

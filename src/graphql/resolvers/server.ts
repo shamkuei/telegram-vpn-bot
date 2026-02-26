@@ -1,4 +1,4 @@
-import { Server } from '@/db/schema/index.js'
+import type { Server } from '@/db/schema/servers'
 
 export async function getRegion(server: Server, _args: any, _ctx: any) {
   if (!server.regionId) return null

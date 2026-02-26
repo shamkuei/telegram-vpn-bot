@@ -1,9 +1,27 @@
+import 'dotenv/config'
 import { Bot, GrammyError, session } from 'grammy'
 import { autoRetry } from '@grammyjs/auto-retry'
-import { hydrateReply, parseMode } from 'grammy_parse_mode'
+// import { hydrateReply, parseMode } from 'grammy_parse_mode'
 import { conversations, createConversation } from '@grammyjs/conversations'
-import { config } from '@/config/index.js'
-import { SessionStore } from '@/cache/index.js'
+import { config } from '@/config/index'
+
+// ============================================================================
+// Simple In-Memory Session Storage (for testing without Redis)
+// ============================================================================
+
+const memorySessions = new Map<string, any>()
+
+const memoryStorage = {
+  async read(key: string) {
+    return memorySessions.get(key)
+  },
+  async write(key: string, value: any) {
+    memorySessions.set(key, value)
+  },
+  async delete(key: string) {
+    memorySessions.delete(key)
+  }
+}
 
 // ============================================================================
 // Bot Setup
@@ -17,31 +35,17 @@ bot.api.config.use(autoRetry({
   maxDelaySeconds: 60
 }))
 
-// Parse mode middleware
-bot.use(hydrateReply)
+// Parse mode middleware (disabled - package not available)
+// bot.use(hydrateReply)
 
-// Session middleware
+// Session middleware (using in-memory storage for testing)
 bot.use(
   session({
     initial: () => ({}),
     getSessionKey: (ctx) => {
       return ctx.from?.id.toString()
     },
-    storage: {
-      async get(key) {
-        const telegramId = parseInt(key)
-        const session = await SessionStore.get(telegramId)
-        return session || undefined
-      },
-      async set(key, value) {
-        const telegramId = parseInt(key)
-        await SessionStore.set(telegramId, value)
-      },
-      async delete(key) {
-        const telegramId = parseInt(key)
-        await SessionStore.delete(telegramId)
-      }
-    }
+    storage: memoryStorage
   })
 )
 
@@ -74,16 +78,16 @@ export type BotContext = Context & {
 // Import Handlers
 // ============================================================================
 
-import { startHandler } from './handlers/start.js'
-import { helpHandler } from './handlers/help.js'
-import { plansHandler } from './handlers/plans.js'
-import { mySubscriptionsHandler } from './handlers/subscriptions.js'
-import { paymentHandler, handleScreenshotUpload, handlePaymentReferenceInput } from './handlers/payment.js'
-import { profileHandler } from './handlers/profile.js'
-import { giftHandler } from './handlers/gift.js'
-import { testAccountHandler } from './handlers/test-account.js'
-import { referralHandler } from './handlers/referral.js'
-import { adminHandler, handlePaymentRejectionReason } from './handlers/admin.js'
+import { startHandler } from './handlers/start'
+import { helpHandler } from './handlers/help'
+import { plansHandler } from './handlers/plans'
+import { mySubscriptionsHandler } from './handlers/subscriptions'
+import { paymentHandler, handleScreenshotUpload, handlePaymentReferenceInput } from './handlers/payment'
+import { profileHandler } from './handlers/profile'
+import { giftHandler } from './handlers/gift'
+import { testAccountHandler } from './handlers/test-account'
+import { referralHandler } from './handlers/referral'
+import { adminHandler, handlePaymentRejectionReason } from './handlers/admin'
 
 // ============================================================================
 // Register Handlers
@@ -165,15 +169,17 @@ bot.on('msg:text', async (ctx) => {
 bot.catch((err) => {
   console.error('Bot error:', err)
 
-  if (err instanceof GrammyError) {
-    return ctx.reply(
-      '⚠️ An error occurred while processing your request. Please try again later.'
-    )
+  if (err.ctx) {
+    if (err instanceof GrammyError) {
+      err.ctx.reply(
+        '⚠️ An error occurred while processing your request. Please try again later.'
+      ).catch(() => {})
+    } else {
+      err.ctx.reply(
+        '⚠️ An unexpected error occurred. Our team has been notified.'
+      ).catch(() => {})
+    }
   }
-
-  return ctx.reply(
-    '⚠️ An unexpected error occurred. Our team has been notified.'
-  )
 })
 
 // ============================================================================
@@ -248,3 +254,14 @@ export async function setBotCommands() {
 }
 
 export { bot as default }
+
+// ============================================================================
+// Auto-start when run directly
+// ============================================================================
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startPolling().catch((err) => {
+    console.error('Failed to start bot:', err)
+    process.exit(1)
+  })
+}

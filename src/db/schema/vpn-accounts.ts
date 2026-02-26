@@ -1,20 +1,20 @@
 import {
   bigserial,
   bigint,
+  boolean,
   index,
   integer,
   pgTable,
   text,
   timestamp,
   unique,
-  varchar,
-  boolean
+  varchar
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { vpnAccountStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { servers } from './servers.js'
-import { subscriptions } from './subscriptions.js'
+import { vpnAccountStatusEnum } from './enums'
+import { users } from './users'
+import { servers } from './servers'
+import { subscriptions } from './subscriptions'
 
 export const vpnAccounts = pgTable(
   'vpn_accounts',

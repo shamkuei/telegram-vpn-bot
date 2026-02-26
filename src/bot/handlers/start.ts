@@ -1,7 +1,7 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { config } from '@/config/index.js'
-import { upsertUser } from '@/services/user.js'
+import { config } from '@/config/index'
+import { upsertUser } from '@/services/user'
 
 // ============================================================================
 // Types

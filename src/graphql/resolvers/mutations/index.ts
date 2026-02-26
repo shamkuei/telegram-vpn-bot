@@ -1,5 +1,6 @@
-import { Context } from '../context.js'
-import { CacheInvalidation } from '@/cache/index.js'
+import type { Context } from '@/graphql/context'
+import { CacheInvalidation } from '@/cache/index'
+import { generateReferralCode } from '@/utils/referral'
 
 // ============================================================================
 // Mutation Implementations
@@ -9,7 +10,6 @@ export const upsertUser = async (_parent: any, args: { input: any }, ctx: Contex
   const { db } = await import('@/db/index.js')
   const { users } = await import('@/db/schema/index.js')
   const { eq, sql } = await import('drizzle-orm')
-  import { generateReferralCode } from '@/utils/referral.js'
 
   const { input } = args
 

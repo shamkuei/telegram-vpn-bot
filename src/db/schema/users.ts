@@ -12,7 +12,7 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { userStatusEnum, resellerTierEnum } from './enums.js'
+import { userStatusEnum, resellerTierEnum } from './enums'
 
 export const users = pgTable(
   'users',

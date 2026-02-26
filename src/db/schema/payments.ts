@@ -10,9 +10,9 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
-import { paymentProviderEnum, paymentStatusEnum } from './enums.js'
-import { users } from './users.js'
-import { subscriptions } from './subscriptions.js'
+import { paymentProviderEnum, paymentStatusEnum } from './enums'
+import { users } from './users'
+import { subscriptions } from './subscriptions'
 
 export const paymentLogs = pgTable(
   'payment_logs',
@@ -69,13 +69,13 @@ export const paymentLogs = pgTable(
     ),
     createdAtIdx: index('idx_payment_logs_created_at').on(table.createdAt),
     expiredAtIdx: index('idx_payment_logs_expired_at').on(table.expiredAt),
-    // Partial index for pending payments needing check
+    // Partial index for pending payments needing check (removed NOW() - not IMMUTABLE)
     pendingCheckIdx: index('idx_payment_logs_pending_check').on(
       table.id,
       table.userId,
       table.provider
     ).where(
-      sql`${table.status} IN ('pending', 'processing') AND ${table.createdAt} > NOW() - INTERVAL '7 days'`
+      sql`${table.status} IN ('pending', 'processing')`
     )
   })
 )

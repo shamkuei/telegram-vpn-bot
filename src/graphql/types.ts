@@ -1,4 +1,2 @@
-import { Resolvers } from './resolvers.js'
-
 // Re-export types for convenience
-export type { Resolvers }
+// Note: Resolvers type is defined inline in resolvers/index.ts to avoid circular dependency

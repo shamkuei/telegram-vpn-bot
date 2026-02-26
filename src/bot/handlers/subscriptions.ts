@@ -1,7 +1,7 @@
 import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
-import { subscriptionQueries } from '@/db/queries.js'
-import { getUserSubscriptionsText, getSubscriptionKeyboard } from '@/bot/utils/subscription.js'
+import { subscriptionQueries } from '@/db/queries'
+import { getUserSubscriptionsText, getSubscriptionKeyboard } from '@/bot/utils/subscription'
 
 // ============================================================================
 // Types

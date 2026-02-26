@@ -1,5 +1,5 @@
-import { db, withTransaction } from '@/db/index.js'
-import { wallets, walletTransactions, users } from '@/db/schema/index.js'
+import { db, withTransaction } from '@/db/index'
+import { wallets, walletTransactions, users } from '@/db/schema/index'
 import { eq, sql, and } from 'drizzle-orm'
 
 // ============================================================================

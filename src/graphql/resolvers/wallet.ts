@@ -1,4 +1,5 @@
-import { WalletTransaction } from '@/db/schema/index.js'
+import type { Wallet } from '@/db/schema/wallets'
+import type { WalletTransaction } from '@/db/schema/wallet-transactions'
 
 export async function getTransactions(wallet: Wallet, _args: any, _ctx: any) {
   const { db } = await import('@/db/index.js')

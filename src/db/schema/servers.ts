@@ -10,8 +10,8 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { serverStatusEnum, serverTypeEnum } from './enums.js'
-import { serverRegions } from './regions.js'
+import { serverStatusEnum, serverTypeEnum } from './enums'
+import { serverRegions } from './regions'
 
 export const servers = pgTable(
   'servers',

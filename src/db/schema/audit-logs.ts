@@ -7,7 +7,8 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { auditActorTypeEnum, auditStatusEnum } from './enums.js'
+import { sql } from 'drizzle-orm'
+import { auditActorTypeEnum, auditStatusEnum } from './enums'
 
 export const auditLogs = pgTable(
   'audit_logs',

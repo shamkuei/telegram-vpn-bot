@@ -1,4 +1,4 @@
-import { Plan } from '@/db/schema/index.js'
+import type { Plan } from '@/db/schema/plans'
 
 export async function getAllowedRegions(plan: Plan, _args: any, _ctx: any) {
   if (!plan.allowedRegionIds || plan.allowedRegionIds.length === 0) {

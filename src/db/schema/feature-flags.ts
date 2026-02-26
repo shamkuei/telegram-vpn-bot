@@ -1,4 +1,6 @@
 import {
+  bigint,
+  boolean,
   index,
   integer,
   pgTable,
@@ -7,7 +9,7 @@ import {
   timestamp,
   varchar
 } from 'drizzle-orm/pg-core'
-import { users } from './users.js'
+import { users } from './users'
 
 export const featureFlags = pgTable(
   'feature_flags',
