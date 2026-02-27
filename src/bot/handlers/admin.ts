@@ -2,6 +2,7 @@ import { Bot, Context } from 'grammy'
 import { InlineKeyboard } from 'grammy'
 import { config } from '@/config/index'
 import { manualPaymentService } from '@/services/manual-payment'
+import { walletRechargeService } from '@/services/wallet-recharge'
 import type { BotContext } from '../index'
 
 // ============================================================================
@@ -11,7 +12,7 @@ import type { BotContext } from '../index'
 type BotContext = Context
 
 // ============================================================================
-// Admin Handler - Manual Payment Verification
+// Admin Handler - Manual Payment & Wallet Recharge Verification
 // ============================================================================
 
 export async function adminHandler(ctx: BotContext) {
@@ -30,6 +31,12 @@ export async function adminHandler(ctx: BotContext) {
   // Handle /verify_payment <payment_id> command
   if (command === '/verify_payment') {
     await handleVerifyPaymentCommand(ctx, params)
+    return
+  }
+
+  // Handle /recharge <recharge_id> command
+  if (command === '/recharge') {
+    await handleVerifyRechargeCommand(ctx, params)
     return
   }
 
@@ -60,6 +67,24 @@ export async function adminHandler(ctx: BotContext) {
         await handleApprovePayment(ctx, paymentId!)
       } else if (subAction === 'reject') {
         await handleRejectPayment(ctx, paymentId!)
+      }
+      break
+
+    case 'recharges':
+      if (subAction === 'pending') {
+        await handlePendingRecharges(ctx)
+      } else if (subAction === 'list') {
+        await handleAdminRechargesList(ctx)
+      } else if (!isNaN(parseInt(subAction || ''))) {
+        await handleViewRechargeDetails(ctx, parseInt(subAction || ''))
+      }
+      break
+
+    case 'recharge':
+      if (subAction === 'approve') {
+        await handleApproveRecharge(ctx, paymentId!)
+      } else if (subAction === 'reject') {
+        await handleRejectRecharge(ctx, paymentId!)
       }
       break
 
@@ -531,4 +556,409 @@ export async function isAdmin(ctx: BotContext): Promise<boolean> {
   if (!from) return false
 
   return config.TELEGRAM_ADMIN_IDS.includes(from.id)
+}
+
+// ============================================================================
+// Verify Recharge Command
+// ============================================================================
+
+async function handleVerifyRechargeCommand(ctx: BotContext, rechargeIdStr: string) {
+  const from = ctx.from
+  if (!from) return
+
+  const rechargeId = parseInt(rechargeIdStr)
+
+  if (isNaN(rechargeId)) {
+    await ctx.reply('❌ Invalid recharge ID. Usage: /recharge <recharge_id>')
+    return
+  }
+
+  const recharge = await walletRechargeService.getRechargeRequestById(rechargeId)
+
+  if (!recharge) {
+    await ctx.reply(`❌ Recharge #${rechargeId} not found.`)
+    return
+  }
+
+  await displayRechargeDetailsForVerification(ctx, recharge)
+}
+
+// ============================================================================
+// Display Recharge Details for Admin Verification
+// ============================================================================
+
+async function displayRechargeDetailsForVerification(
+  ctx: BotContext,
+  recharge: any
+): Promise<void> {
+  const { userQueries } = await import('@/db/queries.js')
+  const user = await userQueries.findById(recharge.userId)
+
+  if (!user) {
+    await ctx.reply(`❌ User not found for recharge #${recharge.id}.`)
+    return
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text('✅ Approve', `admin:recharge:approve:${recharge.id}`)
+    .text('❌ Reject', `admin:recharge:reject:${recharge.id}`)
+    .row()
+    .text('📋 View All Pending', 'admin:recharges:pending')
+    .row()
+    .text('🏠 Main Menu', 'menu:main')
+
+  // Get screenshot if available
+  if (recharge.screenshotFileId) {
+    try {
+      const message = `
+🔍 *Wallet Recharge Verification*
+
+━━━━━━━━━━━━━━━━━
+*Request ID:* WR-${recharge.id}
+*Status:* ${recharge.status}
+*Created:* ${new Date(recharge.createdAt).toLocaleString()}
+*Expires:* ${recharge.expiresAt ? new Date(recharge.expiresAt).toLocaleString() : 'N/A'}
+━━━━━━━━━━━━━━━━━
+
+👤 *User Information:*
+*Name:* ${user.telegramFirstName} ${user.telegramLastName || ''}
+*Username:* @${user.telegramUsername || 'N/A'}
+*Telegram ID:* \`${user.telegramId}\`
+*User ID:* ${user.id}
+
+💰 *Recharge Details:*
+*Amount:* $${(recharge.amountCents / 100).toFixed(2)}
+*Currency:* ${recharge.currency}
+
+📝 *Payment Details:*
+*Reference:* ${recharge.paymentReference || 'Not provided'}
+*Note:* ${recharge.userNote || 'None'}
+
+━━━━━━━━━━━━━━━━━
+Please verify the screenshot and choose an action below.
+      `
+
+      // Send photo with caption
+      await ctx.replyWithPhoto(recharge.screenshotFileId, {
+        caption: message,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      })
+      return
+    } catch (error) {
+      console.error('Failed to send photo:', error)
+    }
+  }
+
+  // Fallback: send text-only message
+  const message = `
+🔍 *Wallet Recharge Verification*
+
+━━━━━━━━━━━━━━━━━
+*Request ID:* WR-${recharge.id}
+*Status:* ${recharge.status}
+*Created:* ${new Date(recharge.createdAt).toLocaleString()}
+*Expires:* ${recharge.expiresAt ? new Date(recharge.expiresAt).toLocaleString() : 'N/A'}
+━━━━━━━━━━━━━━━━━
+
+👤 *User Information:*
+*Name:* ${user.telegramFirstName} ${user.telegramLastName || ''}
+*Username:* @${user.telegramUsername || 'N/A'}
+*Telegram ID:* \`${user.telegramId}\`
+*User ID:* ${user.id}
+
+💰 *Recharge Details:*
+*Amount:* $${(recharge.amountCents / 100).toFixed(2)}
+*Currency:* ${recharge.currency}
+
+📝 *Payment Details:*
+*Reference:* ${recharge.paymentReference || 'Not provided'}
+*Note:* ${recharge.userNote || 'None'}
+
+📸 *Screenshot:* ${recharge.screenshotFileId ? 'Available' : '⚠️ Not uploaded'}
+
+━━━━━━━━━━━━━━━━━
+Please verify the payment and choose an action below.
+  `
+
+  await ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: keyboard
+  })
+}
+
+// ============================================================================
+// View Pending Recharges
+// ============================================================================
+
+async function handlePendingRecharges(ctx: BotContext): Promise<void> {
+  const pendingRecharges = await walletRechargeService.getPendingRechargeRequests(10, 0)
+
+  if (pendingRecharges.length === 0) {
+    const keyboard = new InlineKeyboard()
+      .text('🏠 Main Menu', 'menu:main')
+
+    await ctx.reply(
+      '✅ *No Pending Recharges*\n\n' +
+      'All recharge requests have been processed!',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      }
+    )
+    return
+  }
+
+  const message = `
+📋 *Pending Wallet Recharges* (${pendingRecharges.length} total)
+
+━━━━━━━━━━━━━━━━━
+${pendingRecharges.map((r, i) => {
+  const date = new Date(r.request.createdAt).toLocaleDateString()
+  return `${i + 1}. ID: \`WR-${r.request.id}\`
+     User: ${r.user.telegramFirstName}
+     Amount: $${(r.request.amountCents / 100).toFixed(2)}
+     Date: ${date}
+     📸: ${r.request.screenshotFileId ? '✅' : '❌'}`
+}).join('\n\n')}
+━━━━━━━━━━━━━━━━━
+
+Use /recharge <id> to review a request.
+  `
+
+  const keyboard = new InlineKeyboard()
+
+  // Add buttons for first 5 requests
+  pendingRecharges.slice(0, 5).forEach((r) => {
+    keyboard.text(`#WR-${r.request.id}`, `admin:recharges:view:${r.request.id}`)
+  })
+
+  keyboard
+    .row()
+    .text('🔄 Refresh', 'admin:recharges:pending')
+    .row()
+    .text('🏠 Main Menu', 'menu:main')
+
+  await ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: keyboard
+  })
+}
+
+// ============================================================================
+// View Recharge Details
+// ============================================================================
+
+async function handleViewRechargeDetails(ctx: BotContext, rechargeId: number): Promise<void> {
+  const recharge = await walletRechargeService.getRechargeRequestById(rechargeId)
+
+  if (!recharge) {
+    await ctx.reply(`❌ Recharge #${rechargeId} not found.`)
+    return
+  }
+
+  await displayRechargeDetailsForVerification(ctx, recharge)
+}
+
+// ============================================================================
+// List All Recharges (Admin)
+// ============================================================================
+
+async function handleAdminRechargesList(ctx: BotContext): Promise<void> {
+  const fromId = ctx.from?.id
+
+  if (!fromId) return
+
+  // Get pending recharge requests
+  const allRecharges = await walletRechargeService.getPendingRechargeRequests(20, 0)
+
+  if (allRecharges.length === 0) {
+    await ctx.reply('📋 No recharge requests found.')
+    return
+  }
+
+  const message = `
+📊 *Wallet Recharge List*
+
+━━━━━━━━━━━━━━━━━
+${allRecharges.map((r, i) => {
+  const date = new Date(r.request.createdAt).toLocaleDateString()
+  const statusEmoji = {
+    'awaiting_screenshot': '📸',
+    'pending': '⏳',
+    'approved': '✅',
+    'rejected': '❌',
+    'expired': '⏰'
+  }[r.request.status] || '❓'
+
+  return `${i + 1}. ${statusEmoji} \`WR-${r.request.id}\`
+     User: ${r.user.telegramFirstName}
+     Amount: $${(r.request.amountCents / 100).toFixed(2)}
+     Status: ${r.request.status}
+     Date: ${date}`
+}).join('\n\n')}
+━━━━━━━━━━━━━━━━━
+  `
+
+  const keyboard = new InlineKeyboard()
+    .text('🔄 Refresh', 'admin:recharges:list')
+    .row()
+    .text('🏠 Main Menu', 'menu:main')
+
+  await ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: keyboard
+  })
+}
+
+// ============================================================================
+// Approve Recharge
+// ============================================================================
+
+async function handleApproveRecharge(ctx: BotContext, rechargeId: number): Promise<void> {
+  const from = ctx.from
+  if (!from) return
+
+  // Send typing action
+  await ctx.api.sendChatAction(ctx.chat!.id, 'typing')
+
+  const recharge = await walletRechargeService.getRechargeRequestById(rechargeId)
+
+  if (!recharge) {
+    await ctx.reply(`❌ Recharge #${rechargeId} not found.`)
+    return
+  }
+
+  if (recharge.status !== 'pending') {
+    await ctx.reply(`❌ Recharge is not in pending state. Current status: ${recharge.status}`)
+    return
+  }
+
+  // Verify recharge (approve)
+  const result = await walletRechargeService.verifyRecharge({
+    requestId: rechargeId,
+    adminId: from.id,
+    approved: true,
+    adminNote: `Approved by ${from.firstName || 'Admin'}`
+  })
+
+  if (!result.success) {
+    await ctx.reply(`❌ ${result.message}`)
+    return
+  }
+
+  // Notify user
+  if (result.request && result.request.userId) {
+    const { notifyRechargeApproval } = await import('./wallet.js')
+    await notifyRechargeApproval(ctx, result.request.userId, rechargeId, result.request.amountCents)
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text('📋 Next Pending', 'admin:recharges:pending')
+    .row()
+    .text('🏠 Main Menu', 'menu:main')
+
+  await ctx.reply(
+    '✅ *Recharge Approved!*\n\n' +
+    `Recharge WR-${rechargeId} has been approved and $${(recharge.amountCents / 100).toFixed(2)} has been added to the user's wallet.`,
+    {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    }
+  )
+}
+
+// ============================================================================
+// Reject Recharge
+// ============================================================================
+
+async function handleRejectRecharge(ctx: BotContext, rechargeId: number): Promise<void> {
+  const from = ctx.from
+  if (!from) return
+
+  // Set session state for rejection reason
+  ;(ctx.session as any).rejectingRechargeId = rechargeId
+  ;(ctx.session as any).awaitingRechargeRejectionReason = true
+
+  const keyboard = new InlineKeyboard()
+    .text('❌ Cancel Rejection', 'admin:recharges:pending')
+
+  await ctx.reply(
+    '❌ *Reject Recharge*\n\n' +
+    `Please provide a reason for rejecting recharge WR-${rechargeId}.\n\n` +
+    'Type your reason below (or click Cancel to abort):',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    }
+  )
+}
+
+// ============================================================================
+// Handle Recharge Rejection Reason Input (Text Handler)
+// ============================================================================
+
+export async function handleRechargeRejectionReason(ctx: BotContext, reason: string): Promise<boolean> {
+  const from = ctx.from
+  if (!from) return false
+
+  const rejectingRechargeId = (ctx.session as any).rejectingRechargeId
+  const awaitingReason = (ctx.session as any).awaitingRechargeRejectionReason
+
+  if (!awaitingReason || !rejectingRechargeId) {
+    return false // Not for us
+  }
+
+  // Clear session state
+  ;(ctx.session as any).rejectingRechargeId = undefined
+  ;(ctx.session as any).awaitingRechargeRejectionReason = undefined
+
+  const recharge = await walletRechargeService.getRechargeRequestById(rejectingRechargeId)
+
+  if (!recharge) {
+    await ctx.reply(`❌ Recharge #${rejectingRechargeId} not found.`)
+    return true
+  }
+
+  if (recharge.status !== 'pending') {
+    await ctx.reply(`❌ Recharge is not in pending state. Current status: ${recharge.status}`)
+    return true
+  }
+
+  // Verify recharge (reject)
+  const result = await walletRechargeService.verifyRecharge({
+    requestId: rejectingRechargeId,
+    adminId: from.id,
+    approved: false,
+    rejectionReason: reason
+  })
+
+  if (!result.success) {
+    await ctx.reply(`❌ ${result.message}`)
+    return true
+  }
+
+  // Notify user
+  if (result.request && result.request.userId) {
+    const { notifyRechargeRejection } = await import('./wallet.js')
+    await notifyRechargeRejection(ctx, result.request.userId, rejectingRechargeId, reason)
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text('📋 Next Pending', 'admin:recharges:pending')
+    .row()
+    .text('🏠 Main Menu', 'menu:main')
+
+  await ctx.reply(
+    '❌ *Recharge Rejected*\n\n' +
+    `Recharge WR-${rejectingRechargeId} has been rejected.\n` +
+    `Reason: ${reason}\n\n` +
+    'The user has been notified.',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    }
+  )
+
+  return true
 }

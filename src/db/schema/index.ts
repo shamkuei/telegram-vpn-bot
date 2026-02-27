@@ -12,6 +12,7 @@ export * from './wallets'
 export * from './wallet-transactions'
 export * from './payments'
 export * from './manual-payments'
+export * from './wallet-recharge-requests'
 export * from './referrals'
 export * from './gift-codes'
 export * from './resellers'
@@ -33,6 +34,7 @@ export type { VpnAccount } from './vpn-accounts'
 export type { Wallet } from './wallets'
 export type { PaymentLog } from './payments'
 export type { ManualPayment } from './manual-payments'
+export type { WalletRechargeRequest } from './wallet-recharge-requests'
 export type { Referral } from './referrals'
 export type { GiftCode } from './gift-codes'
 export type { Reseller } from './resellers'
@@ -52,6 +54,7 @@ import { wallets } from './wallets'
 import { walletTransactions } from './wallet-transactions'
 import { paymentLogs } from './payments'
 import { manualPayments } from './manual-payments'
+import { walletRechargeRequests } from './wallet-recharge-requests'
 import { referrals } from './referrals'
 import { giftCodes, giftRedemptions } from './gift-codes'
 import { resellers, resellerTransactions } from './resellers'
@@ -76,6 +79,7 @@ export const schema = {
   walletTransactions,
   paymentLogs,
   manualPayments,
+  walletRechargeRequests,
   referrals,
   giftCodes,
   giftRedemptions,

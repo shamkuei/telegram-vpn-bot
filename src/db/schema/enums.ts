@@ -83,6 +83,15 @@ export const manualPaymentStatusEnum = pgEnum('manual_payment_status', [
   'expired'
 ])
 
+// Wallet Recharge Request enums
+export const walletRechargeStatusEnum = pgEnum('wallet_recharge_status', [
+  'pending',
+  'awaiting_screenshot',
+  'approved',
+  'rejected',
+  'expired'
+])
+
 // Referral enums
 export const referralStatusEnum = pgEnum('referral_status', [
   'pending',

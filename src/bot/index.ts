@@ -58,9 +58,14 @@ export interface BotSession {
   selectedPlan?: number
   selectedServer?: number
   pendingPaymentId?: number
+  pendingRechargeId?: number
   awaitingReference?: boolean
+  awaitingRechargeReference?: boolean
+  awaitingRechargeAmount?: boolean
   awaitingRejectionReason?: boolean
+  awaitingRechargeRejectionReason?: boolean
   rejectingPaymentId?: number
+  rejectingRechargeId?: number
   pendingPayment?: {
     amount: number
     provider: string
@@ -80,14 +85,24 @@ export type BotContext = Context & {
 
 import { startHandler } from './handlers/start'
 import { helpHandler } from './handlers/help'
-import { plansHandler } from './handlers/plans'
+import { plansHandler, handleConfirmPurchase } from './handlers/plans'
 import { mySubscriptionsHandler } from './handlers/subscriptions'
 import { paymentHandler, handleScreenshotUpload, handlePaymentReferenceInput } from './handlers/payment'
 import { profileHandler } from './handlers/profile'
 import { giftHandler } from './handlers/gift'
 import { testAccountHandler } from './handlers/test-account'
 import { referralHandler } from './handlers/referral'
-import { adminHandler, handlePaymentRejectionReason } from './handlers/admin'
+import {
+  adminHandler,
+  handlePaymentRejectionReason,
+  handleRechargeRejectionReason
+} from './handlers/admin'
+import {
+  walletHandler,
+  handleWalletScreenshotUpload,
+  handleWalletRechargeReferenceInput,
+  handleRechargeAmountInput
+} from './handlers/wallet'
 
 // ============================================================================
 // Register Handlers
@@ -101,7 +116,14 @@ bot.command('help', helpHandler)
 
 // Plans
 bot.command('plans', plansHandler)
-bot.callbackQuery(/^plans:/, plansHandler)
+bot.callbackQuery(/^plans:(?!confirm)/, plansHandler)
+bot.callbackQuery(/^plans:confirm:/, async (ctx) => {
+  const planId = parseInt(ctx.match?.[3] || '0')
+  await handleConfirmPurchase(ctx, planId)
+})
+
+// Wallet
+bot.callbackQuery(/^wallet:/, walletHandler)
 
 // My subscriptions
 bot.command('mysub', mySubscriptionsHandler)
@@ -130,13 +152,24 @@ bot.callbackQuery(/^referral:/, referralHandler)
 bot.command('admin', adminHandler)
 bot.command('verify_payment', adminHandler)
 bot.command('payments', adminHandler)
+bot.command('recharge', adminHandler)
 bot.callbackQuery(/^admin:/, adminHandler)
+
+// Wallet command
+bot.command('wallet', walletHandler)
 
 // ============================================================================
 // Handle Photo Messages (for screenshots)
 // ============================================================================
 
 bot.on('msg:photo', async (ctx) => {
+  // Check if user has a pending wallet recharge
+  const pendingRechargeId = (ctx.session as any).pendingRechargeId
+  if (pendingRechargeId) {
+    await handleWalletScreenshotUpload(ctx)
+    return
+  }
+
   // Check if user has a pending payment
   const pendingPaymentId = (ctx.session as any).pendingPaymentId
   if (pendingPaymentId) {
@@ -153,9 +186,21 @@ bot.on('msg:text', async (ctx) => {
   const text = ctx.message?.text
   if (!text) return
 
-  // Check if awaiting rejection reason (admin)
+  // Check if awaiting recharge amount (user)
+  const rechargeAmountHandled = await handleRechargeAmountInput(ctx, text)
+  if (rechargeAmountHandled) return
+
+  // Check if awaiting rejection reason (admin - payment)
   const rejectionHandled = await handlePaymentRejectionReason(ctx, text)
   if (rejectionHandled) return
+
+  // Check if awaiting recharge rejection reason (admin - recharge)
+  const rechargeRejectionHandled = await handleRechargeRejectionReason(ctx, text)
+  if (rechargeRejectionHandled) return
+
+  // Check if awaiting wallet recharge reference (user)
+  const rechargeReferenceHandled = await handleWalletRechargeReferenceInput(ctx, text)
+  if (rechargeReferenceHandled) return
 
   // Check if awaiting payment reference (user)
   const handled = await handlePaymentReferenceInput(ctx, text)
@@ -245,6 +290,7 @@ export async function setBotCommands() {
     { command: 'start', description: 'Start the bot' },
     { command: 'help', description: 'Show help and available commands' },
     { command: 'plans', description: 'View available VPN plans' },
+    { command: 'wallet', description: 'View wallet balance and top up' },
     { command: 'mysub', description: 'View my subscriptions' },
     { command: 'profile', description: 'View my profile and settings' },
     { command: 'referral', description: 'Get my referral link' },

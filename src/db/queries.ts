@@ -745,3 +745,290 @@ export const manualPaymentQueries = {
     return updated || null
   }
 }
+
+// ============================================================================
+// Wallet Recharge Queries
+// ============================================================================
+
+export const walletRechargeQueries = {
+  // Create recharge request
+  create: async (request: import('./schema/index').NewWalletRechargeRequest) => {
+    const [newRequest] = await db.insert(schema.walletRechargeRequests).values(request).returning()
+    return newRequest
+  },
+
+  // Find by ID
+  findById: async (id: number) => {
+    const [request] = await db
+      .select()
+      .from(schema.walletRechargeRequests)
+      .where(eq(schema.walletRechargeRequests.id, id))
+      .limit(1)
+    return request || null
+  },
+
+  // Get pending requests (for admin verification)
+  getPending: async (limit: number = 50, offset: number = 0) => {
+    return await db
+      .select({
+        request: schema.walletRechargeRequests,
+        user: schema.users
+      })
+      .from(schema.walletRechargeRequests)
+      .innerJoin(schema.users, eq(schema.walletRechargeRequests.userId, schema.users.id))
+      .where(
+        and(
+          eq(schema.walletRechargeRequests.status, 'pending'),
+          sql`${schema.walletRechargeRequests.screenshotFileId} IS NOT NULL`
+        )
+      )
+      .orderBy(desc(schema.walletRechargeRequests.createdAt))
+      .limit(limit)
+      .offset(offset)
+  },
+
+  // Get user recharge requests
+  getByUserId: async (userId: number) => {
+    return await db
+      .select()
+      .from(schema.walletRechargeRequests)
+      .where(eq(schema.walletRechargeRequests.userId, userId))
+      .orderBy(desc(schema.walletRechargeRequests.createdAt))
+  },
+
+  // Get pending request count
+  getPendingCount: async () => {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.walletRechargeRequests)
+      .where(
+        and(
+          eq(schema.walletRechargeRequests.status, 'pending'),
+          sql`${schema.walletRechargeRequests.screenshotFileId} IS NOT NULL`
+        )
+      )
+    return result?.count || 0
+  },
+
+  // Attach screenshot to request
+  attachScreenshot: async (
+    requestId: number,
+    fileId: string,
+    fileUniqueId: string,
+    filePath: string,
+    mimeType: string,
+    fileSize: number
+  ) => {
+    const [updated] = await db
+      .update(schema.walletRechargeRequests)
+      .set({
+        screenshotFileId: fileId,
+        screenshotFileUniqueId: fileUniqueId,
+        screenshotFilePath: filePath,
+        screenshotMimeType: mimeType,
+        screenshotFileSizeBytes: fileSize,
+        screenshotReceivedAt: new Date(),
+        status: 'pending',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.walletRechargeRequests.id, requestId))
+      .returning()
+    return updated || null
+  },
+
+  // Set payment reference (transaction ID from user)
+  setPaymentReference: async (requestId: number, reference: string) => {
+    const [updated] = await db
+      .update(schema.walletRechargeRequests)
+      .set({
+        paymentReference: reference,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.walletRechargeRequests.id, requestId))
+      .returning()
+    return updated || null
+  },
+
+  // Get expired pending requests
+  getExpiredPending: async () => {
+    return await db
+      .select()
+      .from(schema.walletRechargeRequests)
+      .where(
+        and(
+          eq(schema.walletRechargeRequests.status, 'pending'),
+          isNotNull(schema.walletRechargeRequests.expiresAt),
+          sql`${schema.walletRechargeRequests.expiresAt} < NOW()`
+        )
+      )
+  },
+
+  // Mark request as expired
+  markAsExpired: async (requestId: number) => {
+    const [updated] = await db
+      .update(schema.walletRechargeRequests)
+      .set({
+        status: 'expired',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.walletRechargeRequests.id, requestId))
+      .returning()
+    return updated || null
+  }
+}
+  // Create manual payment
+  create: async (payment: NewManualPayment) => {
+    const [newPayment] = await db.insert(schema.manualPayments).values(payment).returning()
+    return newPayment
+  },
+
+  // Find by ID
+  findById: async (id: number) => {
+    const [payment] = await db
+      .select()
+      .from(schema.manualPayments)
+      .where(eq(schema.manualPayments.id, id))
+      .limit(1)
+    return payment || null
+  },
+
+  // Get pending payments (for admin verification)
+  getPending: async (limit: number = 50, offset: number = 0) => {
+    return await db
+      .select({
+        payment: schema.manualPayments,
+        user: schema.users,
+        plan: schema.plans
+      })
+      .from(schema.manualPayments)
+      .innerJoin(schema.users, eq(schema.manualPayments.userId, schema.users.id))
+      .innerJoin(schema.plans, eq(schema.manualPayments.planId, schema.plans.id))
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.screenshotFileId)
+        )
+      )
+      .orderBy(desc(schema.manualPayments.createdAt))
+      .limit(limit)
+      .offset(offset)
+  },
+
+  // Get user payments
+  getByUserId: async (userId: number) => {
+    return await db
+      .select({
+        payment: schema.manualPayments,
+        plan: schema.plans
+      })
+      .from(schema.manualPayments)
+      .innerJoin(schema.plans, eq(schema.manualPayments.planId, schema.plans.id))
+      .where(eq(schema.manualPayments.userId, userId))
+      .orderBy(desc(schema.manualPayments.createdAt))
+  },
+
+  // Get pending payment count
+  getPendingCount: async () => {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.manualPayments)
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.screenshotFileId)
+        )
+      )
+    return result?.count || 0
+  },
+
+  // Update payment status (approve/reject)
+  updateStatus: async (
+    paymentId: number,
+    status: 'approved' | 'rejected' | 'expired',
+    verifiedBy?: number,
+    adminNote?: string,
+    rejectionReason?: string,
+    subscriptionId?: number
+  ) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        status,
+        verifiedBy,
+        verifiedAt: new Date(),
+        adminNote,
+        rejectionReason,
+        subscriptionId,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Attach screenshot to payment
+  attachScreenshot: async (
+    paymentId: number,
+    fileId: string,
+    fileUniqueId: string,
+    filePath: string,
+    mimeType: string,
+    fileSize: number
+  ) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        screenshotFileId: fileId,
+        screenshotFileUniqueId: fileUniqueId,
+        screenshotFilePath: filePath,
+        screenshotMimeType: mimeType,
+        screenshotFileSizeBytes: fileSize,
+        screenshotReceivedAt: new Date(),
+        status: 'pending',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Set payment reference (transaction ID from user)
+  setPaymentReference: async (paymentId: number, reference: string) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        paymentReference: reference,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  },
+
+  // Get expired pending payments
+  getExpiredPending: async () => {
+    return await db
+      .select()
+      .from(schema.manualPayments)
+      .where(
+        and(
+          eq(schema.manualPayments.status, 'pending'),
+          isNotNull(schema.manualPayments.expiresAt),
+          sql`${schema.manualPayments.expiresAt} < NOW()`
+        )
+      )
+  },
+
+  // Mark payment as expired
+  markAsExpired: async (paymentId: number) => {
+    const [updated] = await db
+      .update(schema.manualPayments)
+      .set({
+        status: 'expired',
+        updatedAt: new Date()
+      })
+      .where(eq(schema.manualPayments.id, paymentId))
+      .returning()
+    return updated || null
+  }
+}
